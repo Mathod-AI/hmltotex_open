@@ -1,11 +1,26 @@
-#include <string>
+#include "hwpEqToTex.h"
 #include <cstring>
+#include <iostream>
 
-extern void hwpEqToTex(std::wstring& str);
-
-extern "C" __declspec(dllexport) void HwpEqToTex(const wchar_t* in, wchar_t* out, size_t num_size)
+extern "C" __declspec(dllexport) size_t HwpEqToTex(const wchar_t* in, wchar_t* out, size_t num_size)
 {
-    std::wstring out_str = in;
+    static bool __initialized = false;
+    if (!__initialized)
+    {
+        __initialized = true;
+        initializeEqValue(0, nullptr);
+    }
+
+    wstring out_str = L"$";
+    out_str += in;
+    out_str += L"$";
     hwpEqToTex(out_str);
-    std::copy_n(out_str.begin(), std::min(out_str.length(), num_size), out);
+
+    if (out_str.length() - 2 < num_size)
+    {
+        std::copy(out_str.begin() + 1, out_str.end() - 1, out);
+        out[out_str.length() - 2] = L'\0';
+    }
+
+    return out_str.length() + 1;
 }
